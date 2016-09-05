@@ -27,7 +27,7 @@ import cv2
 import numpy as np
 
 #path = './CamVid/'
-path = './tmm_dataset'
+path = './tmm_dataset/'
 data_shape = 200*300
 
 def normalized(rgb):
@@ -45,9 +45,9 @@ def normalized(rgb):
     return norm
 
 def binarylab(labels):
-    x = np.zeros([200,300,23])
-    for i in range(200):
-        for j in range(300):
+    x = np.zeros([300,200,23])
+    for i in range(300):
+        for j in range(200):
             x[i,j,labels[i][j]]=1
     return x
 
@@ -59,8 +59,8 @@ def prep_data():
         txt = f.readlines()
         txt = [line.split(' ') for line in txt]
     for i in range(len(txt)):
-        train_data.append(np.rollaxis(normalized(cv2.imread(os.getcwd() + txt[i][0][7:])),2))
-        train_label.append(binarylab(cv2.imread(os.getcwd() + txt[i][1][7:][:-1])[:,:,0]))
+        train_data.append(np.rollaxis(normalized(cv2.imread(txt[i][0])),2))
+        train_label.append(binarylab(cv2.imread(txt[i][1][:-1])[:,:,0]))
         print('.',end='')
     return np.array(train_data), np.array(train_label)
 
@@ -154,7 +154,7 @@ def create_decoding_layers():
 
 autoencoder = models.Sequential()
 # Add a noise layer to get a denoising autoencoder. This helps avoid overfitting
-autoencoder.add(Layer(input_shape=(3, 200, 300)))
+autoencoder.add(Layer(input_shape=(3, 300, 200)))
 
 #autoencoder.add(GaussianNoise(sigma=0.3))
 autoencoder.encoding_layers = create_encoding_layers()
@@ -166,11 +166,13 @@ for l in autoencoder.decoding_layers:
 
 autoencoder.add(Convolution2D(23, 1, 1, border_mode='valid',))
 #import ipdb; ipdb.set_trace()
-autoencoder.add(Reshape((23,data_shape), input_shape=(23,200,300)))
+autoencoder.add(Reshape((23,data_shape), input_shape=(23,300,200)))
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
 #from keras.optimizers import SGD
 #optimizer = SGD(lr=0.01, momentum=0.8, decay=0., nesterov=False)
+
+print('Compiling the model')
 autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta')
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -180,6 +182,7 @@ model_path = os.path.join(current_dir, "autoencoder.png")
 nb_epoch = 100
 batch_size = 14
 
+print('Starting Training')
 history = autoencoder.fit(train_data, train_label, batch_size=batch_size, nb_epoch=nb_epoch,
                     show_accuracy=True, verbose=1, class_weight=class_weighting )#, validation_data=(X_test, X_test))
 
