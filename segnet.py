@@ -28,7 +28,7 @@ import numpy as np
 
 #path = './CamVid/'
 path = './tmm_dataset/'
-data_shape = 200*300
+data_shape = 300*200
 
 def normalized(rgb):
     #return rgb/255.0
@@ -58,16 +58,18 @@ def prep_data():
     with open(path+'train.txt') as f:
         txt = f.readlines()
         txt = [line.split(' ') for line in txt]
-    for i in range(len(txt)):
-        train_data.append(np.rollaxis(normalized(cv2.imread(txt[i][0])),2))
+    print(str(len(txt))+'samples')
+    #for i in range(len(txt)):
+    for i in range(0,400):
+	train_data.append(np.rollaxis(normalized(cv2.imread(txt[i][0])),2))
         train_label.append(binarylab(cv2.imread(txt[i][1][:-1])[:,:,0]))
-        print('.',end='')
+    print('Loading completed')
     return np.array(train_data), np.array(train_label)
 
 train_data, train_label = prep_data()
-train_label = np.reshape(train_label,(2145,data_shape,23))
+train_label = np.reshape(train_label,(400,data_shape,23))
 
-class_weighting = np.ones[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+class_weighting = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 #class_weighting= [0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614]
 
 class UnPooling2D(Layer):
