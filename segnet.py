@@ -163,7 +163,7 @@ for l in autoencoder.decoding_layers:
     autoencoder.add(l)
 
 autoencoder.add(Convolution2D(12, 1, 1, border_mode='valid',))
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 autoencoder.add(Reshape((12,data_shape), input_shape=(12,360,480)))
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
@@ -173,7 +173,7 @@ autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta')
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = os.path.join(current_dir, "autoencoder.png")
-plot(model_path, to_file=model_path, show_shapes=True)
+#plot(model_path, to_file=model_path, show_shapes=True)
 
 nb_epoch = 100
 batch_size = 14
