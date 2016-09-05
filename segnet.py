@@ -26,8 +26,9 @@ from keras import backend as K
 import cv2
 import numpy as np
 
-path = './CamVid/'
-data_shape = 360*480
+#path = './CamVid/'
+path = './tmm_dataset'
+data_shape = 200*300
 
 def normalized(rgb):
     #return rgb/255.0
@@ -44,9 +45,9 @@ def normalized(rgb):
     return norm
 
 def binarylab(labels):
-    x = np.zeros([360,480,12])
-    for i in range(360):
-        for j in range(480):
+    x = np.zeros([200,300,23])
+    for i in range(200):
+        for j in range(300):
             x[i,j,labels[i][j]]=1
     return x
 
@@ -64,9 +65,10 @@ def prep_data():
     return np.array(train_data), np.array(train_label)
 
 train_data, train_label = prep_data()
-train_label = np.reshape(train_label,(367,data_shape,12))
+train_label = np.reshape(train_label,(2145,data_shape,23))
 
-class_weighting= [0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614]
+class_weighting = np.ones[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+#class_weighting= [0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614]
 
 class UnPooling2D(Layer):
     """A 2D Repeat layer"""
@@ -152,7 +154,7 @@ def create_decoding_layers():
 
 autoencoder = models.Sequential()
 # Add a noise layer to get a denoising autoencoder. This helps avoid overfitting
-autoencoder.add(Layer(input_shape=(3, 360, 480)))
+autoencoder.add(Layer(input_shape=(3, 200, 300)))
 
 #autoencoder.add(GaussianNoise(sigma=0.3))
 autoencoder.encoding_layers = create_encoding_layers()
@@ -162,9 +164,9 @@ for l in autoencoder.encoding_layers:
 for l in autoencoder.decoding_layers:
     autoencoder.add(l)
 
-autoencoder.add(Convolution2D(12, 1, 1, border_mode='valid',))
+autoencoder.add(Convolution2D(23, 1, 1, border_mode='valid',))
 #import ipdb; ipdb.set_trace()
-autoencoder.add(Reshape((12,data_shape), input_shape=(12,360,480)))
+autoencoder.add(Reshape((23,data_shape), input_shape=(23,200,300)))
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
 #from keras.optimizers import SGD
@@ -173,7 +175,7 @@ autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta')
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = os.path.join(current_dir, "autoencoder.png")
-#plot(model_path, to_file=model_path, show_shapes=True)
+#plot(model_path, to_file=model_path, show_shapes=True) #uses graphviz....
 
 nb_epoch = 100
 batch_size = 14
