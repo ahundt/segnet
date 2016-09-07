@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 from __future__ import print_function
 import os
@@ -168,14 +171,24 @@ for l in autoencoder.decoding_layers:
 
 autoencoder.add(Convolution2D(23, 1, 1, border_mode='valid',))
 #import ipdb; ipdb.set_trace()
-autoencoder.add(Reshape((23,data_shape), input_shape=(23,300,200)))
+# test avec ajout d'une couche de padding
+
+autoencoder.add(ZeroPadding2D(padding=(2,0)))
+
+autoencoder.add(Reshape((23,300*200), input_shape=(23,300,200))) # sortie en 23,296,200 ?????
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
+
 #from keras.optimizers import SGD
-#optimizer = SGD(lr=0.01, momentum=0.8, decay=0., nesterov=False)
 
 print('Compiling the model')
 autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta')
+
+# test de prediction pour voir la shape de la sortie
+output = autoencoder.predict(np.zeros((1,3,300,200)),batch_size=32)
+print('output shape')
+print(output.shape)
+
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = os.path.join(current_dir, "autoencoder.png")
@@ -189,3 +202,4 @@ history = autoencoder.fit(train_data, train_label, batch_size=batch_size, nb_epo
                     show_accuracy=True, verbose=1, class_weight=class_weighting )#, validation_data=(X_test, X_test))
 
 autoencoder.save_weights('model_weight_ep100.hdf5')
+
