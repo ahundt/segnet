@@ -1,0 +1,4 @@
+./image_test/img14.tif ./image_test/img14_gt.tif
+./image_test/img14.tif ./image_test/img14_gt.tif
+./image_test/img14.tif ./image_test/img14_gt.tif
+./image_test/img14.tif ./image_test/img14_gt.tif

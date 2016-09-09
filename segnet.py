@@ -30,8 +30,11 @@ import cv2
 import numpy as np
 
 #path = './CamVid/'
-path = './tmm_dataset/'
-data_shape = 300*200
+#path = './tmm_dataset/'
+path = './image_test/'
+data_shape = 250*250
+h,w = 250,250
+nlabels = 4
 
 def normalized(rgb):
     #return rgb/255.0
@@ -48,9 +51,9 @@ def normalized(rgb):
     return norm
 
 def binarylab(labels):
-    x = np.zeros([300,200,23])
-    for i in range(300):
-        for j in range(200):
+    x = np.zeros([h,w,nlabels])
+    for i in range(h):
+        for j in range(w):
             x[i,j,labels[i][j]]=1
     return x
 
@@ -62,17 +65,17 @@ def prep_data():
         txt = f.readlines()
         txt = [line.split(' ') for line in txt]
     print(str(len(txt))+'samples')
-    #for i in range(len(txt)):
-    for i in range(0,400):
+    for i in range(len(txt)):
 	train_data.append(np.rollaxis(normalized(cv2.imread(txt[i][0])),2))
         train_label.append(binarylab(cv2.imread(txt[i][1][:-1])[:,:,0]))
     print('Loading completed')
     return np.array(train_data), np.array(train_label)
 
 train_data, train_label = prep_data()
-train_label = np.reshape(train_label,(400,data_shape,23))
+train_label = np.reshape(train_label,(4,data_shape,nlabels))
 
-class_weighting = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+class_weighting = [1,1,1,1]
+#class_weighting = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 #class_weighting= [0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614]
 
 class UnPooling2D(Layer):
@@ -159,7 +162,7 @@ def create_decoding_layers():
 
 autoencoder = models.Sequential()
 # Add a noise layer to get a denoising autoencoder. This helps avoid overfitting
-autoencoder.add(Layer(input_shape=(3, 300, 200)))
+autoencoder.add(Layer(input_shape=(3, h, w)))
 
 #autoencoder.add(GaussianNoise(sigma=0.3))
 autoencoder.encoding_layers = create_encoding_layers()
@@ -169,37 +172,42 @@ for l in autoencoder.encoding_layers:
 for l in autoencoder.decoding_layers:
     autoencoder.add(l)
 
-autoencoder.add(Convolution2D(23, 1, 1, border_mode='valid',))
+autoencoder.add(Convolution2D(nlabels, 1, 1, border_mode='valid',))
 #import ipdb; ipdb.set_trace()
 # test avec ajout d'une couche de padding
 
-autoencoder.add(ZeroPadding2D(padding=(2,0)))
+autoencoder.add(ZeroPadding2D(padding=(1,1)))
 
-autoencoder.add(Reshape((23,300*200), input_shape=(23,300,200))) # sortie en 23,296,200 ?????
+
+autoencoder.add(Reshape((nlabels,data_shape), input_shape=(nlabels,h,w))) # sortie en 23,296,200 ?????
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
 
 #from keras.optimizers import SGD
 
 print('Compiling the model')
-autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta')
+autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta', metrics=["accuracy"])
 
 # test de prediction pour voir la shape de la sortie
-output = autoencoder.predict(np.zeros((1,3,300,200)),batch_size=32)
+'''
+output = autoencoder.predict(np.zeros((1,3,h,w)),batch_size=32)
 print('output shape')
 print(output.shape)
-
+'''
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = os.path.join(current_dir, "autoencoder.png")
 #plot(model_path, to_file=model_path, show_shapes=True) #uses graphviz....
 
 nb_epoch = 100
-batch_size = 14
+batch_size = 4
 
 print('Starting Training')
 history = autoencoder.fit(train_data, train_label, batch_size=batch_size, nb_epoch=nb_epoch,
-                    show_accuracy=True, verbose=1, class_weight=class_weighting )#, validation_data=(X_test, X_test))
+                 verbose=1, class_weight=class_weighting )#, validation_data=(X_test, X_test))
+
+autoencoder.load_weights('model_weight_ep100.hdf5')
+
 
 autoencoder.save_weights('model_weight_ep100.hdf5')
 
