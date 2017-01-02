@@ -29,12 +29,20 @@ from keras import backend as K
 import cv2
 import numpy as np
 
-#path = './CamVid/'
+path = './CamVid/'
+h,w = 360,480
+class_weighting = [0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614]
+
 #path = './tmm_dataset/'
-path = './image_test/'
-data_shape = 250*250
-h,w = 250,250
-nlabels = 4
+#class_weighting = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+#path = './image_test/'
+#h,w = 250,250
+#class_weighting = [1,1,1,1]
+
+data_shape = h*w
+nlabels = len(class_weighting)
+
+
 
 def normalized(rgb):
     #return rgb/255.0
@@ -73,10 +81,6 @@ def prep_data():
 
 train_data, train_label = prep_data()
 train_label = np.reshape(train_label,(4,data_shape,nlabels))
-
-class_weighting = [1,1,1,1]
-#class_weighting = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-#class_weighting= [0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614]
 
 class UnPooling2D(Layer):
     """A 2D Repeat layer"""
